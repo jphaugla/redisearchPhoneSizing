@@ -1,11 +1,13 @@
 package jph.lettuce.examples.irsf;
 
+import com.github.javafaker.Faker;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.sync.RedisCommands;
 
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
+import java.util.Locale;
 import java.util.Random;
 import java.util.stream.IntStream;
 import java.util.HashMap;
@@ -17,14 +19,14 @@ public class IrsfGenerator {
     private static String redis_host="redis-12077.c263.us-east-1-2.ec2.cloud.redislabs.com";
     private static String redis_port="12077";
     private static String redis_pw="tiIPBVc282vsTLpnfhsVCwoEwQPaXdgi";
-    private static int num_elements=500000;
+    private static int num_elements=500;
 
     // redis-18345.c17524.eu-west-1-mz.ec2.cloud.rlrcp.com:18345
     // rdRmtLYEaicqCH0b4lmrJWKTUBh5eYYJ
 
     public static void main(String[] args) throws KeyManagementException, NoSuchAlgorithmException {
         lettuceGen();
-        //jedisGen();
+        // fakerGen();
     }
 
     private static void lettuceGen() {
@@ -75,6 +77,47 @@ public class IrsfGenerator {
                              redisCommands.hmset(key, new_phone);
                  }
                  );
+    }
+
+    private static void fakerGen() {
+
+        RedisURI redisURI = create(redis_host,
+                redis_port,
+                null,
+                redis_pw,
+                false,
+                null);
+        RedisClient redisClient = RedisClient.create(redisURI);
+
+        RedisCommands<String, String> redisCommands = redisClient.connect()
+                .sync();
+
+        Faker faker = new Faker(new Locale("en-UK"));
+
+        IntStream.range(0, num_elements)
+                .parallel()
+                .forEach(i -> {
+                            Map<String, String> new_phone = new HashMap<String, String>();
+                            String phone_number = String.valueOf(faker.phoneNumber().cellPhone().replaceAll("[^0-9]", ""));
+                            Integer digit2 = faker.number().numberBetween(1, 50);
+                            String firstTwo = String.format("%02d", digit2);  // First 2 digits
+                            String lastNine = phone_number.substring(1,10);
+                            String all11 = firstTwo + lastNine;
+                            String nextSix = lastNine.substring(0,6);
+                            String lastThree = lastNine.substring(6,9);
+
+                            new_phone.put("f2", firstTwo);
+                            new_phone.put("l9", lastNine);
+                                                        //  this column is next 6 so does not include the first 2 digits
+                            new_phone.put("n6", nextSix);
+                            new_phone.put("l3", lastThree);
+
+                            String key = "n:" + all11;
+                            new_phone.put("n",   all11);
+
+                            redisCommands.hmset(key, new_phone);
+                        }
+                );
     }
 
     public static RedisURI create(String hostname,

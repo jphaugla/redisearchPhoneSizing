@@ -18,13 +18,23 @@ Can use docker with redis-stack or use redis cloud
 ```bash
 docker-compose up -d
 ```
-## Modify redis connection
-Modify the redis connection in the code for the docker or redis cloud connection.  The change needs to be made in [](src/main/java/jph/lettuce/examples/irsf/IrsfGenerator.java)
+## Modify java code
+### Modify the redis connection
+The change needs to be made in [this java code](src/main/java/jph/lettuce/examples/irsf/IrsfGenerator.java)
 ```bash
     private static String redis_host="redis-digits.another.us-east-1-2.ec2.cloud.redislabs.com";
     private static String redis_port="12076";
     private static String redis_pw="somewildstringfromrediscloud";
     private static int num_elements=500000;
+```
+### Choose faker data or random
+The default is to use random generation.  I also tested out the java fakerdata library but did not find the phone number generation very helpful
+The change is in the [same java code](src/main/java/jph/lettuce/examples/irsf/IrsfGenerator.java) as above here
+```bash
+    public static void main(String[] args) throws KeyManagementException, NoSuchAlgorithmException {
+        lettuceGen();
+        // fakerGen();
+    }
 ```
 ## compile and run
 * compile
@@ -98,3 +108,4 @@ look for the column called "num_docs"  to quit increasing
   * the index is 88% of the original index
 * the f2H/n6H is same as f2/n6 except cardinality is dropped in half for each
   * shows index becomes much smaller with lower cardinality 55.68% of original
+  * likely, this is overly optimistic on the cardinality but want to illustrate the effect of cardinality
